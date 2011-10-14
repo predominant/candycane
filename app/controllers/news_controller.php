@@ -45,7 +45,14 @@ class NewsController extends AppController {
  */
  	public $paginate = array('order' => array('News.created_on' => 'desc'));
 
-	#  accept_key_auth :index
+/**
+ * Authorize settings
+ *
+ * @var string
+ */
+ 	public $authorize = array('except' => array('show'));
+
+	# accept_key_auth :index
 
 /**
  * Before Filter
