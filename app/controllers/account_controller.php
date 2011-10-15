@@ -1,31 +1,58 @@
 <?php
 /**
- * account_controller.php
+ * Account Controller
  *
- */
-
-/**
- * AccountController
- *
+ * @package candycane
+ * @subpackage candycane.controllers
  * @todo implement yet
  */
 class AccountController extends AppController {
 
-	public $uses = array('User', 'Project', 'Setting', 'Event', 'Issue', 'Token');
+/**
+ * Models to use
+ *
+ * @var array
+ */
+ 	public $uses = array(
+		'Event',
+		'Issue',
+		'Project',
+		'Setting',
+		'Token',
+		'User',
+	);
 
-	public $helpers = array('Text');
+/**
+ * Helpers
+ *
+ * @var array
+ */
+ 	public $helpers = array(
+		'Text',
+	);
 
-	public $components = array('Fetcher', 'RequestHandler', 'Mailer');
+/**
+ * Components
+ *
+ * @var array
+ */
+	public $components = array(
+		'Fetcher',
+		'RequestHandler',
+		'Mailer',
+	);
 
-  //  helper :custom_fields
-  //  include CustomFieldsHelper
+	//  helper :custom_fields
+	//  include CustomFieldsHelper   
 
-  // prevents login action to be filtered by check_if_login_required application scope filter
+	// prevents login action to be filtered by check_if_login_required application scope filter
 
 /**
  * beforeFilter
  *
  * skip_before_filter :check_if_login_required, :only => [:login, :lost_password, :register, :activate]
+ *
+ * @return void
  */
 	public function beforeFilter() {
 		$skip_action = array('login', 'lost_password', 'register', 'activate');
@@ -34,25 +61,26 @@ class AccountController extends AppController {
 		} else {
 			$this->setSettings(); // todo: kimoi
 			$this->set_localization();
-			$this->set('currentuser',aa('logged',false));
+			$this->set('currentuser', array('logged' => false));
 		}
 	}
 
-	#  # Token based account activation
-	#  def activate
-	#    redirect_to(home_url) && return unless Setting.self_registration? && params[:token]
-	#    token = Token.find_by_action_and_value('register', params[:token])
-	#    redirect_to(home_url) && return unless token and !token.expired?
-	#    user = token.user
-	#    redirect_to(home_url) && return unless user.status == User::STATUS_REGISTERED
-	#    user.status = User::STATUS_ACTIVE
-	#    if user.save
-	#      token.destroy
-	#      flash[:notice] = l(:notice_account_activated)
-	#    end
-	#    redirect_to :action => 'login'
-	#  end
-	#end
+#  # Token based account activation
+#  def activate
+#    redirect_to(home_url) && return unless Setting.self_registration? && params[:token]
+#    token = Token.find_by_action_and_value('register', params[:token])
+#    redirect_to(home_url) && return unless token and !token.expired?
+#    user = token.user
+#    redirect_to(home_url) && return unless user.status == User::STATUS_REGISTERED
+#    user.status = User::STATUS_ACTIVE
+#    if user.save
+#      token.destroy
+#      flash[:notice] = l(:notice_account_activated)
+#    end
+#    redirect_to :action => 'login'
+#  end
+#  
+#end
 
 /**
  * register
@@ -65,8 +93,7 @@ class AccountController extends AppController {
  */
 	public function register() {
 		if (!$this->Setting->self_registration || $this->Session->read('auth_source_registration')) {
-			$this->redirect('/');
-			return;
+			return $this->redirect('/');
 		}
 
 		if (!$this->data) {
@@ -96,12 +123,12 @@ class AccountController extends AppController {
 			switch ($this->Setting->self_registration) {
 				case '1':
 					// Email activation
-					#token = Token.new(:user => @user, :action => "register")
-					#if @user.save and token.save
-					#  Mailer.deliver_register(token)
-					#  flash[:notice] = l(:notice_account_register_done)
-					#  redirect_to :action => 'login'
-					#end
+					#          token = Token.new(:user => @user, :action => "register")
+					#          if @user.save and token.save
+					#            Mailer.deliver_register(token)
+					#            flash[:notice] = l(:notice_account_register_done)
+					#            redirect_to :action => 'login'
+					#          end
 					break;
 				case '3':
 					// Automatic activation
@@ -145,33 +172,33 @@ class AccountController extends AppController {
 			return;
 		}
 
-        // Authenticate user
-        $user = $this->User->tryToLogin($this->data['User']['username'], $this->data['User']['password']);
+		// Authenticate user
+		$user = $this->User->tryToLogin($this->data['User']['username'], $this->data['User']['password']);
 
 		if ($user === false) {
 			// Invalid credentials
-			$this->Session->setFlash(__('Invalid user or password',true), 'default', array('class' => 'flash flash_error'));
+			$this->Session->setFlash(__('Invalid user or password',true), 'default', array('class'=>'flash flash_error'));
 			return;
 		} else if ((bool)$this->User->data) {
 			// (bool)$this->User->data == new_record
 			// Onthefly creation failed, display the registration form to fill/fix attributes
-			#@user = user
-			#session[:auth_source_registration] = {:login => user.login, :auth_source_id => user.auth_source_id }
+			#        @user = user
+			#        session[:auth_source_registration] = {:login => user.login, :auth_source_id => user.auth_source_id }
 			$this->render('register');
 		} else {
 			// Valid user
 			$this->logged_user($user);
 
-			## generate a key and set cookie if autologin
-			#if params[:autologin] && Setting.autologin?
-			#  token = Token.create(:user => user, :action => 'autologin')
-			#  cookies[:autologin] = { :value => token.value, :expires => 1.year.from_now }
-			#end
-			#redirect_back_or_default :controller => 'my', :action => 'page'
+			#        # generate a key and set cookie if autologin
+			#        if params[:autologin] && Setting.autologin?
+			#          token = Token.create(:user => user, :action => 'autologin')
+			#          cookies[:autologin] = { :value => token.value, :expires => 1.year.from_now }
+			#        end
+			#        redirect_back_or_default :controller => 'my', :action => 'page'
 			if (!$this->params['form']['back_url'][0] == '/') {
 				$this->params['form']['back_url'] = '/';
 			}
-			$this->redirect($this->params['form']['back_url']);
+			$this->redirect($this->params['form']['back_url']);        
 		}
 	}
 
@@ -199,29 +226,35 @@ class AccountController extends AppController {
  * @todo custom values
  */
 	public function show($id) {
-        $id = (int)$id;
+		$id = (int)$id;
 
-        $user = $this->User->find('first',
-          array(
-            'conditions' => array('User.id' => $id),
-            'recursive' => 2)
-        );
+		$user = $this->User->find('first', array(
+			'conditions' => array('User.id' => $id),
+			'recursive' => 2)
+		);
 
 		if (!is_array($user)) {
-            $this->cakeError('error', array('message' => "user id {$id} not found."));
+			$this->cakeError('error', array('message' => "user id {$id} not found."));
 		}
 
-        $this->set('user', $user);
-        #@custom_values = @user.custom_values
-        $this->Fetcher->fetch($this->current_user,array('author' => $user['User']['id']));
-        $events = $this->Fetcher->events(null, null, array('limit' => 10));
-        $events_by_day_data = $this->Event->group_by($events, 'event_date');
-        $this->set('events_by_day_data',$events_by_day_data);
-        $this->set('issue_count',$this->Issue->find('count',aa('conditions',aa('author_id',$user['User']['id']))));
-        #    events = Redmine::Activity::Fetcher.new(User.current, :author => @user).events(nil, nil, :limit => 10)
-        #    @events_by_day = events.group_by(&:event_date)
-        #  rescue ActiveRecord::RecordNotFound
-        #    render_404
+		$this->set('user', $user);
+		#@custom_values = @user.custom_values
+
+		# show only public projects and private projects that the logged in user is also a member of
+		#    @memberships = @user.memberships.select do |membership|
+		#      membership.project.is_public? || (User.current.member_of?(membership.project))
+		#    end
+
+		$this->Fetcher->fetch($user['User'],array('author' => $user['User']['id']));
+		$events = $this->Fetcher->events(null, null, array('limit'=>10));
+		$events_by_day_data = $this->Event->group_by($events, 'event_date');
+
+		$this->set('events_by_day_data',$events_by_day_data);
+		$this->set('issue_count',$this->Issue->find('count', array('conditions' => array('author_id' => $user['User']['id']))));
+		#    events = Redmine::Activity::Fetcher.new(User.current, :author => @user).events(nil, nil, :limit => 10)
+		#    @events_by_day = events.group_by(&:event_date)
+		#  rescue ActiveRecord::RecordNotFound
+		#    render_404
 	}
 
 /**
@@ -235,14 +268,17 @@ class AccountController extends AppController {
 		}
 
 		if (isset($this->params['named']['token'])) {
-			$token = $this->Token->find('first',
-				array('conditions' => array('Token.action' => 'recovery', 'Token.value' => $this->params['named']['token']))
-			);
+			$token = $this->Token->find('first', array(
+				'conditions' => array(
+					'Token.action' => 'recovery',
+					'Token.value' => $this->params['named']['token'])
+			));
 
 			if ($this->Token->isExpired($token)) {
 				// @TODO add error message
 				$this->redirect('/');
 			}
+
 			if ($this->RequestHandler->isPost()) {
 				if ($this->data['User']['new_password'] != $this->data['User']['new_password_confirmation']) {
 					// @TODO add error message
@@ -256,7 +292,7 @@ class AccountController extends AppController {
 
 				if ($this->User->save($user)) {
 					$this->Token->destroy($user['User']['id'], 'recovery');
-					$this->Session->setFlash(__('Password was successfully updated.',true), 'default', array('class' => 'flash flash_notice'));
+					$this->Session->setFlash(__('Password was successfully updated.',true), 'default', array('class'=>'flash flash_notice'));
 					$this->redirect('/login');
 					return;
 				}
@@ -276,7 +312,7 @@ class AccountController extends AppController {
 				return;
 			}
 
-			# create a new token for password recovery
+			// create a new token for password recovery
 			$data = array(
 				'user_id' => $user['User']['id'],
 				'action' => 'recovery',
@@ -285,7 +321,7 @@ class AccountController extends AppController {
 
 			if ($token = $this->Token->save($data)) {
 				$this->Mailer->deliver_lost_password($token, $user);
-				$this->Session->setFlash(__('An email with instructions to choose a new password has been sent to you.',true), 'default', array('class' => 'flash flash_notice'));
+				$this->Session->setFlash(__('An email with instructions to choose a new password has been sent to you.',true), 'default', array('class'=>'flash flash_notice'));
 				$this->redirect('/login');
 			}
 		}
@@ -295,7 +331,7 @@ class AccountController extends AppController {
  * logged_user
  * @access private
  */
-	public function logged_user($user) {
+	function logged_user($user) {
 		if (isset($user['User'])) {
 			$user = $user['User'];
 		}
@@ -308,5 +344,4 @@ class AccountController extends AppController {
 			$this->Session->write('user_id', null);
 		}
 	}
-
 }
