@@ -19,7 +19,12 @@ class NewsController extends AppController {
  *
  * @var array
  */
-	public $uses = array('News', 'User', 'Project', 'Comment');
+	public $uses = array(
+		'Comment',
+		'News',
+		'Project',
+		'User',
+	);
 
 /**
  * View helpers
